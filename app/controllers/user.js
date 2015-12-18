@@ -5,6 +5,16 @@ var jwt = require('jwt-simple');
 var tokenSecret="thetruthoflifeis";
 var moment = require("moment");
 
+var nodemailer = require('nodemailer');
+// create reusable transporter object using SMTP transport
+var transporter = nodemailer.createTransport({
+    service: 'Mandrill',
+    auth: {
+        user: 'secrets.email',
+        pass: 'email.password'
+    }
+});
+
 exports.getUserById = function(req, res) {
 
     //get all users based on id
@@ -111,6 +121,27 @@ exports.postSignin = function(req, res, next) {
     email: req.body.email,
     password: req.body.password
   });
+   
+   /////sending Verification mailvia nodemailer///////////////////////
+  rand=Math.floor((Math.random() * 100) + 54);
+  host=req.get('host');
+  link="http://localhost:3000/"+user.email+"/verify?id="+rand;
+    //mail options
+    mailOptions = {
+      from: 'Foodees.com ✔ <sobingt@gmail.com>',
+      to: req.body.email,
+      subject: 'Account Creation',
+      text: 'Below is a test link. Kindly click the link need to verify the account',
+      html: "Hello,<br> Please Click on the link to verify your email.<br><a href="+link+">Click here to verify</a>"
+    };
+    // send mail with defined transport object
+    transporter.sendMail(mailOptions, function(error, info){
+        if(error)
+          return console.log(error);
+        console.log(info);
+    });
+   //////////////////////Nodemailer ends here///////////////////////
+   
   user.save(function(err) {
     if (err) return next(err);
     res.send(200);
